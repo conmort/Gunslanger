@@ -6,7 +6,7 @@ import stage as Stage
 import slanger as Slanger
 import bullet as Bullet
 
-from bullet import EtherealBullet
+from bullet import EtherealBullet, BigBullet, SmallBullet
 
 # Constants:
 FPS = 60
@@ -89,6 +89,10 @@ def draw_loading_stage(slanger, highlighted_bullet_index=-1):
             bullet = slanger.loaded_bullets[i]
             if isinstance(bullet, EtherealBullet):
                 pygame.draw.rect(screen, MAGENTA, (bullet_x, bullet_y, bullet_size, bullet_size))
+            elif isinstance(bullet, BigBullet):
+                pygame.draw.rect(screen, RED, (bullet_x, bullet_y, bullet_size, bullet_size))
+            elif isinstance(bullet, SmallBullet):
+                pygame.draw.rect(screen, PURPLE, (bullet_x, bullet_y, bullet_size, bullet_size))
             else:
                 pygame.draw.rect(screen, YELLOW, (bullet_x, bullet_y, bullet_size, bullet_size))
             pygame.draw.rect(screen, WHITE, (bullet_x, bullet_y, bullet_size, bullet_size), 2)
@@ -109,6 +113,10 @@ def draw_loading_stage(slanger, highlighted_bullet_index=-1):
         stored_bullet_y = SCREEN_HEIGHT - BUTTON_AREA_HEIGHT - stored_bullet_size - stored_bullet_padding
         if isinstance(bullet, EtherealBullet):
             color = MAGENTA
+        elif isinstance(bullet, BigBullet):
+            color = RED
+        elif isinstance(bullet, SmallBullet):
+            color = PURPLE
         else:
             color = YELLOW
         if i == highlighted_bullet_index:
@@ -191,6 +199,10 @@ def draw_stage(stage, player_slanger, cpu_slanger):
                         print(tile_value)
                         if isinstance(tile_value[0], EtherealBullet):
                             color = MAGENTA
+                        elif isinstance(tile_value[0], BigBullet):
+                            color = RED
+                        elif isinstance(tile_value[0], SmallBullet):
+                            color = PURPLE
                         else:
                             color = YELLOW
                         bullet_list_rect = pygame.Rect(start_x + col * TILE_SIZE, start_y + row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
@@ -263,7 +275,15 @@ def handle_bullet_collision(stage, row, col, new_col, bullet):
     # Check the target tile for collision
     target_tile = stage.stage_lanes[row][new_col]
 
-    if isinstance(target_tile, Slanger.Slanger):
+    # Check for collision with Slanger
+    slanger_hit = any(isinstance(item, Slanger.Slanger) for item in target_tile)
+    
+    if slanger_hit:
+        if isinstance(bullet, BigBullet):
+            # Remove the BigBullet from the board
+            stage.stage_lanes[row][col].remove(bullet)
+            return  # Early exit since the bullet is removed
+
         # Bullet collides with a slanger
         target_slanger = target_tile[0]
         target_slanger.health -= bullet.damage
@@ -280,8 +300,10 @@ def handle_bullet_collision(stage, row, col, new_col, bullet):
         for bullet_2 in target_tile:
             if not (isinstance(bullet, EtherealBullet) or isinstance(bullet_2, EtherealBullet)):
                 if bullet.direction != bullet_2.direction:
-                    bullet.health -= bullet_2.damage
-                    bullet_2.health -= bullet.damage
+                    if not isinstance(bullet_2, SmallBullet):
+                        bullet.health -= bullet_2.damage
+                    if not isinstance(bullet, SmallBullet):
+                        bullet_2.health -= bullet.damage
                     if bullet_2.health <= 0:
                         stage.stage_lanes[row][new_col].remove(bullet_2)
         else:
@@ -301,7 +323,6 @@ def handle_bullet_collision(stage, row, col, new_col, bullet):
 
 def main():
     print("Welcome gunslanger")
-    print("Hi owen")
 
     # Init stage
     stage = Stage.Stage()
@@ -328,7 +349,7 @@ def main():
 
     # Init slanger bullets
     # player_slanger.loaded_bullets = [Bullet.Bullet() for _ in range(6)]
-    player_slanger.stored_bullets = [EtherealBullet() for _ in range(3)] + [Bullet.Bullet() for _ in range(3)]
+    player_slanger.stored_bullets = [BigBullet() for _ in range(3)] + [EtherealBullet() for _ in range(3)] + [SmallBullet() for _ in range(3)]
     # for bullet in player_slanger.stored_bullets:
     #     bullet.health = random.randint(50, 100)
     #     bullet.damage = random.randint(10, 20)
