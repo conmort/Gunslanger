@@ -301,6 +301,7 @@ def handle_bullet_collision(stage, row, col, new_col, bullet):
 
 def main():
     print("Welcome gunslanger")
+    print("Hi owen")
 
     # Init stage
     stage = Stage.Stage()
