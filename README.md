@@ -1,4 +1,6 @@
- # Overworld
+Psuedocode dump
+
+    # Overworld
         # Generate Map:
             # Grid 40x40 (Or circle with r=40)
             # Generate random obsticals
